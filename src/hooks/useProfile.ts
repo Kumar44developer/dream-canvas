@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -12,34 +12,39 @@ interface Profile {
 }
 
 export const useProfile = () => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user) {
-        setProfile(null);
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching profile:", error);
-      } else {
-        setProfile(data);
-      }
+  const fetchProfile = useCallback(async () => {
+    if (!user || !session) {
+      setProfile(null);
       setLoading(false);
-    };
+      return;
+    }
 
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching profile:", error);
+    } else {
+      setProfile(data);
+    }
+    setLoading(false);
+  }, [user, session]);
+
+  useEffect(() => {
     fetchProfile();
-  }, [user]);
+  }, [fetchProfile]);
+
+  const refetchProfile = useCallback(() => {
+    return fetchProfile();
+  }, [fetchProfile]);
 
   const updateCredits = async (newCredits: number) => {
     if (!user) return;
@@ -56,5 +61,5 @@ export const useProfile = () => {
     return { error };
   };
 
-  return { profile, loading, updateCredits };
+  return { profile, loading, updateCredits, refetchProfile };
 };
