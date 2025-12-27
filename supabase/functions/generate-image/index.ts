@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const CREDITS_PER_IMAGE = 2;
+const CREDITS_PER_IMAGE = 1;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
