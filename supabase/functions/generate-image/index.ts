@@ -135,8 +135,24 @@ serve(async (req) => {
     if (!openAIResponse.ok) {
       const errorData = await openAIResponse.text();
       console.error("OpenAI API error:", openAIResponse.status, errorData);
+      
+      // Parse and provide user-friendly error messages
+      let userMessage = "Failed to generate image";
+      try {
+        const errorJson = JSON.parse(errorData);
+        if (errorJson.error?.code === "billing_hard_limit_reached") {
+          userMessage = "OpenAI API billing limit reached. Please contact support or try again later.";
+        } else if (errorJson.error?.code === "rate_limit_exceeded") {
+          userMessage = "Too many requests. Please wait a moment and try again.";
+        } else if (errorJson.error?.message) {
+          userMessage = errorJson.error.message;
+        }
+      } catch {
+        // Keep default message if parsing fails
+      }
+      
       return new Response(
-        JSON.stringify({ error: "Failed to generate image", details: errorData }),
+        JSON.stringify({ error: userMessage }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
