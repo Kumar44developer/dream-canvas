@@ -3,25 +3,18 @@ import { Sparkles, Wand2, CreditCard, LogOut, Coins, Image, Zap } from "lucide-r
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
-import { useEffect } from "react";
 
 const Dashboard = () => {
-  const { user, signOut, loading: authLoading } = useAuth();
+  const { user, signOut } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-  }, [user, authLoading, navigate]);
 
   const handleLogout = async () => {
     await signOut();
     navigate("/");
   };
 
-  if (authLoading || profileLoading) {
+  if (profileLoading) {
     return (
       <div className="min-h-screen bg-background hero-gradient flex items-center justify-center">
         <div className="text-center">
