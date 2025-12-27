@@ -32,10 +32,22 @@ serve(async (req) => {
     }
 
     const openAIApiKey = Deno.env.get("OPENAI_API_KEY");
+    const cloudinaryCloudName = Deno.env.get("CLOUDINARY_CLOUD_NAME");
+    const cloudinaryApiKey = Deno.env.get("CLOUDINARY_API_KEY");
+    const cloudinaryApiSecret = Deno.env.get("CLOUDINARY_API_SECRET");
+
     if (!openAIApiKey) {
       console.error("OPENAI_API_KEY not configured");
       return new Response(
         JSON.stringify({ error: "OpenAI API key not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!cloudinaryCloudName || !cloudinaryApiKey || !cloudinaryApiSecret) {
+      console.error("Cloudinary credentials not configured");
+      return new Response(
+        JSON.stringify({ error: "Cloudinary not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -132,9 +144,60 @@ serve(async (req) => {
     const openAIData = await openAIResponse.json();
     console.log("OpenAI response received");
 
-    // Get the image URL (base64 or URL depending on response_format)
+    // Get the base64 image data from OpenAI
     const imageData = openAIData.data[0];
-    const imageUrl = imageData.url || `data:image/png;base64,${imageData.b64_json}`;
+    const base64Image = imageData.b64_json;
+
+    if (!base64Image) {
+      console.error("No base64 image data from OpenAI");
+      return new Response(
+        JSON.stringify({ error: "No image data received from OpenAI" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Upload to Cloudinary
+    console.log("Uploading to Cloudinary...");
+    const timestamp = Math.floor(Date.now() / 1000);
+    const folder = "generated-images";
+    const publicId = `${user.id}/${Date.now()}`;
+    
+    // Create signature for Cloudinary upload
+    const signatureString = `folder=${folder}&public_id=${publicId}&timestamp=${timestamp}${cloudinaryApiSecret}`;
+    const encoder = new TextEncoder();
+    const data = encoder.encode(signatureString);
+    const hashBuffer = await crypto.subtle.digest("SHA-1", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const signature = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+
+    const formData = new FormData();
+    formData.append("file", `data:image/png;base64,${base64Image}`);
+    formData.append("api_key", cloudinaryApiKey);
+    formData.append("timestamp", timestamp.toString());
+    formData.append("signature", signature);
+    formData.append("folder", folder);
+    formData.append("public_id", publicId);
+
+    const cloudinaryResponse = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/image/upload`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    if (!cloudinaryResponse.ok) {
+      const cloudinaryError = await cloudinaryResponse.text();
+      console.error("Cloudinary upload error:", cloudinaryError);
+      return new Response(
+        JSON.stringify({ error: "Failed to upload image to storage", details: cloudinaryError }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const cloudinaryData = await cloudinaryResponse.json();
+    const imageUrl = cloudinaryData.secure_url;
+    console.log("Image uploaded to Cloudinary:", imageUrl);
 
     // Deduct credits using admin client
     const newCredits = currentCredits - CREDITS_PER_IMAGE;
