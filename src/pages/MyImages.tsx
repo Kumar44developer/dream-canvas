@@ -1,54 +1,70 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, ArrowLeft, Download, ImageIcon } from "lucide-react";
+import { Sparkles, ArrowLeft, Download, ImageIcon, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
 
-// Placeholder data - would come from backend
-const generatedImages = [
-  {
-    id: "1",
-    url: "https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=512&h=512&fit=crop",
-    prompt: "A majestic dragon soaring through a cosmic nebula with iridescent scales",
-    createdAt: "2 hours ago",
-  },
-  {
-    id: "2",
-    url: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=512&h=512&fit=crop",
-    prompt: "Futuristic city floating in the clouds at sunset, cyberpunk style",
-    createdAt: "5 hours ago",
-  },
-  {
-    id: "3",
-    url: "https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=512&h=512&fit=crop",
-    prompt: "Enchanted forest with bioluminescent plants and mystical creatures",
-    createdAt: "1 day ago",
-  },
-  {
-    id: "4",
-    url: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=512&h=512&fit=crop",
-    prompt: "Abstract geometric patterns in deep space with vibrant colors",
-    createdAt: "2 days ago",
-  },
-  {
-    id: "5",
-    url: "https://images.unsplash.com/photo-1464802686167-b939a6910659?w=512&h=512&fit=crop",
-    prompt: "Crystal cave interior with ethereal light beams and reflections",
-    createdAt: "3 days ago",
-  },
-  {
-    id: "6",
-    url: "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=512&h=512&fit=crop",
-    prompt: "Northern lights over a frozen lake with mountain silhouettes",
-    createdAt: "4 days ago",
-  },
-];
+interface GeneratedImage {
+  id: string;
+  image_url: string;
+  prompt: string;
+  created_at: string;
+  credits_used: number;
+}
 
 const MyImages = () => {
-  const handleDownload = (imageUrl: string, prompt: string) => {
-    // Would trigger actual download
-    const link = document.createElement("a");
-    link.href = imageUrl;
-    link.download = `ai-image-${prompt.slice(0, 20).replace(/\s+/g, "-")}.jpg`;
-    link.click();
+  const [images, setImages] = useState<GeneratedImage[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchImages();
+  }, []);
+
+  const fetchImages = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("my-images");
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.images) {
+        setImages(data.images);
+      }
+    } catch (error) {
+      console.error("Error fetching images:", error);
+      toast.error("Failed to load images");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = async (imageUrl: string, prompt: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ai-image-${prompt.slice(0, 20).replace(/\s+/g, "-")}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success("Image downloaded!");
+    } catch {
+      toast.error("Failed to download image");
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+    } catch {
+      return dateString;
+    }
   };
 
   return (
@@ -90,19 +106,24 @@ const MyImages = () => {
             </p>
           </div>
 
-          {/* Image Grid */}
-          {generatedImages.length > 0 ? (
+          {/* Loading State */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            </div>
+          ) : images.length > 0 ? (
+            /* Image Grid */
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {generatedImages.map((image, index) => (
+              {images.map((image, index) => (
                 <div
                   key={image.id}
                   className="glass rounded-2xl overflow-hidden group opacity-0 animate-fade-up hover:border-primary/30 transition-all duration-300"
-                  style={{ animationDelay: `${0.2 + index * 0.1}s` }}
+                  style={{ animationDelay: `${0.2 + index * 0.05}s` }}
                 >
                   {/* Image */}
                   <div className="relative aspect-square overflow-hidden">
                     <img
-                      src={image.url}
+                      src={image.image_url}
                       alt={image.prompt}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
@@ -111,7 +132,7 @@ const MyImages = () => {
                       <Button
                         variant="glow"
                         size="lg"
-                        onClick={() => handleDownload(image.url, image.prompt)}
+                        onClick={() => handleDownload(image.image_url, image.prompt)}
                       >
                         <Download className="w-5 h-5" />
                         Download
@@ -126,12 +147,12 @@ const MyImages = () => {
                     </p>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
-                        {image.createdAt}
+                        {formatDate(image.created_at)}
                       </span>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDownload(image.url, image.prompt)}
+                        onClick={() => handleDownload(image.image_url, image.prompt)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <Download className="w-4 h-4" />
