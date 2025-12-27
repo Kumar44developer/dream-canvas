@@ -1,6 +1,6 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { HfInference } from "https://esm.sh/@huggingface/inference@2.3.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,15 +31,15 @@ serve(async (req) => {
       );
     }
 
-    const openAIApiKey = Deno.env.get("OPENAI_API_KEY");
+    const huggingFaceToken = Deno.env.get("HUGGING_FACE_ACCESS_TOKEN");
     const cloudinaryCloudName = Deno.env.get("CLOUDINARY_CLOUD_NAME");
     const cloudinaryApiKey = Deno.env.get("CLOUDINARY_API_KEY");
     const cloudinaryApiSecret = Deno.env.get("CLOUDINARY_API_SECRET");
 
-    if (!openAIApiKey) {
-      console.error("OPENAI_API_KEY not configured");
+    if (!huggingFaceToken) {
+      console.error("HUGGING_FACE_ACCESS_TOKEN not configured");
       return new Response(
-        JSON.stringify({ error: "OpenAI API key not configured" }),
+        JSON.stringify({ error: "Hugging Face API key not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -75,7 +75,7 @@ serve(async (req) => {
     }
 
     // Parse request
-    const { prompt, size = "1024x1024" } = await req.json();
+    const { prompt } = await req.json();
 
     if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
       return new Response(
@@ -115,62 +115,20 @@ serve(async (req) => {
       );
     }
 
-    // Call OpenAI Image Generation API
-    console.log("Calling OpenAI API...");
-    const openAIResponse = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${openAIApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-image-1",
-        prompt: prompt,
-        n: 1,
-        size: size,
-        quality: "high",
-      }),
+    // Call Hugging Face FLUX.1-schnell API
+    console.log("Calling Hugging Face FLUX.1-schnell API...");
+    const hf = new HfInference(huggingFaceToken);
+
+    const image = await hf.textToImage({
+      inputs: prompt,
+      model: "black-forest-labs/FLUX.1-schnell",
     });
 
-    if (!openAIResponse.ok) {
-      const errorData = await openAIResponse.text();
-      console.error("OpenAI API error:", openAIResponse.status, errorData);
-      
-      // Parse and provide user-friendly error messages
-      let userMessage = "Failed to generate image";
-      try {
-        const errorJson = JSON.parse(errorData);
-        if (errorJson.error?.code === "billing_hard_limit_reached") {
-          userMessage = "OpenAI API billing limit reached. Please contact support or try again later.";
-        } else if (errorJson.error?.code === "rate_limit_exceeded") {
-          userMessage = "Too many requests. Please wait a moment and try again.";
-        } else if (errorJson.error?.message) {
-          userMessage = errorJson.error.message;
-        }
-      } catch {
-        // Keep default message if parsing fails
-      }
-      
-      return new Response(
-        JSON.stringify({ error: userMessage }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const openAIData = await openAIResponse.json();
-    console.log("OpenAI response received");
-
-    // Get the base64 image data from OpenAI
-    const imageData = openAIData.data[0];
-    const base64Image = imageData.b64_json;
-
-    if (!base64Image) {
-      console.error("No base64 image data from OpenAI");
-      return new Response(
-        JSON.stringify({ error: "No image data received from OpenAI" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // Convert the blob to base64
+    const arrayBuffer = await image.arrayBuffer();
+    const base64Image = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    
+    console.log("Image generated successfully from Hugging Face");
 
     // Upload to Cloudinary
     console.log("Uploading to Cloudinary...");
