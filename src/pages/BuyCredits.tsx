@@ -1,9 +1,15 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, ArrowLeft, Check, Zap, Star, Crown } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Sparkles, ArrowLeft, Check, Zap, Star, Crown, Loader2 } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
+import { toast } from "sonner";
 
 const plans = [
   {
+    id: "starter",
     name: "Starter",
     price: 199,
     credits: 50,
@@ -17,6 +23,7 @@ const plans = [
     ],
   },
   {
+    id: "popular",
     name: "Popular",
     price: 499,
     credits: 150,
@@ -31,6 +38,7 @@ const plans = [
     ],
   },
   {
+    id: "pro",
     name: "Pro",
     price: 999,
     credits: 400,
@@ -48,9 +56,46 @@ const plans = [
 ];
 
 const BuyCredits = () => {
-  const handleBuy = (planName: string) => {
-    // Would integrate with payment gateway
-    console.log(`Buying ${planName} plan`);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const { session } = useAuth();
+  const { refetchProfile } = useProfile();
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get("payment");
+    if (paymentStatus === "cancelled") {
+      toast.error("Payment was cancelled");
+    }
+  }, [searchParams]);
+
+  const handleBuy = async (planId: string) => {
+    if (!session) {
+      toast.error("Please sign in to purchase credits");
+      return;
+    }
+
+    setLoadingPlan(planId);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("create-payment", {
+        body: { packageId: planId },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      } else {
+        throw new Error("No checkout URL returned");
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to start payment");
+    } finally {
+      setLoadingPlan(null);
+    }
   };
 
   return (
@@ -165,9 +210,17 @@ const BuyCredits = () => {
                   variant={plan.popular ? "glow" : "outline"}
                   size="lg"
                   className="w-full"
-                  onClick={() => handleBuy(plan.name)}
+                  onClick={() => handleBuy(plan.id)}
+                  disabled={loadingPlan !== null}
                 >
-                  Buy {plan.credits} Credits
+                  {loadingPlan === plan.id ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    `Buy ${plan.credits} Credits`
+                  )}
                 </Button>
               </div>
             ))}
