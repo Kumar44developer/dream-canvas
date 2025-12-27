@@ -1,10 +1,39 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles, Wand2, CreditCard, LogOut, Coins, Image, Zap } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
+import { useEffect } from "react";
 
 const Dashboard = () => {
-  const credits = 10;
-  const userName = "User";
+  const { user, signOut, loading: authLoading } = useAuth();
+  const { profile, loading: profileLoading } = useProfile();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  if (authLoading || profileLoading) {
+    return (
+      <div className="min-h-screen bg-background hero-gradient flex items-center justify-center">
+        <div className="text-center">
+          <Sparkles className="w-12 h-12 text-primary animate-pulse mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const userName = profile?.full_name || user?.email?.split("@")[0] || "User";
+  const credits = profile?.credits ?? 10;
 
   return (
     <div className="min-h-screen bg-background hero-gradient">
@@ -23,11 +52,9 @@ const Dashboard = () => {
               AI Image Generator
             </span>
           </Link>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/">
-              <LogOut className="w-4 h-4" />
-              Logout
-            </Link>
+          <Button variant="ghost" size="sm" onClick={handleLogout}>
+            <LogOut className="w-4 h-4" />
+            Logout
           </Button>
         </div>
       </nav>
@@ -144,11 +171,9 @@ const Dashboard = () => {
 
           {/* Logout Button - Mobile */}
           <div className="mt-8 text-center md:hidden opacity-0 animate-fade-up" style={{ animationDelay: "0.6s" }}>
-            <Button variant="ghost" size="lg" asChild>
-              <Link to="/">
-                <LogOut className="w-5 h-5" />
-                Logout
-              </Link>
+            <Button variant="ghost" size="lg" onClick={handleLogout}>
+              <LogOut className="w-5 h-5" />
+              Logout
             </Button>
           </div>
         </div>
