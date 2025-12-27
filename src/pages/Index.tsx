@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles, LogIn, UserPlus, Wand2, Image, Zap, Stars } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroShowcase from "@/assets/hero-showcase.jpg";
 
 const Index = () => {
@@ -17,13 +18,17 @@ const Index = () => {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" className="hidden sm:flex">
-              <LogIn className="w-4 h-4" />
-              Login
+            <Button variant="ghost" size="sm" className="hidden sm:flex" asChild>
+              <Link to="/login">
+                <LogIn className="w-4 h-4" />
+                Login
+              </Link>
             </Button>
-            <Button variant="outline" size="sm">
-              <UserPlus className="w-4 h-4" />
-              Sign Up
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/signup">
+                <UserPlus className="w-4 h-4" />
+                Sign Up
+              </Link>
             </Button>
           </div>
         </div>
@@ -55,17 +60,23 @@ const Index = () => {
               </p>
 
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 opacity-0 animate-fade-up" style={{ animationDelay: "0.4s" }}>
-                <Button variant="glow" size="xl">
-                  <Wand2 className="w-5 h-5" />
-                  Generate Images
+                <Button variant="glow" size="xl" asChild>
+                  <Link to="/generate">
+                    <Wand2 className="w-5 h-5" />
+                    Generate Images
+                  </Link>
                 </Button>
-                <Button variant="glass" size="xl">
-                  <UserPlus className="w-5 h-5" />
-                  Sign Up Free
+                <Button variant="glass" size="xl" asChild>
+                  <Link to="/signup">
+                    <UserPlus className="w-5 h-5" />
+                    Sign Up Free
+                  </Link>
                 </Button>
-                <Button variant="ghost" size="lg" className="hidden sm:flex">
-                  <LogIn className="w-5 h-5" />
-                  Login
+                <Button variant="ghost" size="lg" className="hidden sm:flex" asChild>
+                  <Link to="/login">
+                    <LogIn className="w-5 h-5" />
+                    Login
+                  </Link>
                 </Button>
               </div>
 
