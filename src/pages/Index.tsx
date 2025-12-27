@@ -19,13 +19,13 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" className="hidden sm:flex" asChild>
-              <Link to="/login">
+              <Link to="/auth">
                 <LogIn className="w-4 h-4" />
                 Login
               </Link>
             </Button>
             <Button variant="outline" size="sm" asChild>
-              <Link to="/signup">
+              <Link to="/auth">
                 <UserPlus className="w-4 h-4" />
                 Sign Up
               </Link>
@@ -67,13 +67,13 @@ const Index = () => {
                   </Link>
                 </Button>
                 <Button variant="glass" size="xl" asChild>
-                  <Link to="/signup">
+                  <Link to="/auth">
                     <UserPlus className="w-5 h-5" />
                     Sign Up Free
                   </Link>
                 </Button>
                 <Button variant="ghost" size="lg" className="hidden sm:flex" asChild>
-                  <Link to="/login">
+                  <Link to="/auth">
                     <LogIn className="w-5 h-5" />
                     Login
                   </Link>
