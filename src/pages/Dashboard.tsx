@@ -117,7 +117,7 @@ const Dashboard = () => {
           </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 opacity-0 animate-fade-up" style={{ animationDelay: "0.5s" }}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 opacity-0 animate-fade-up" style={{ animationDelay: "0.5s" }}>
             {[
               { icon: Image, label: "Images Created", value: "0" },
               { icon: Coins, label: "Credits Used", value: "0" },
@@ -130,6 +130,16 @@ const Dashboard = () => {
                 <div className="text-xs text-muted-foreground">{stat.label}</div>
               </div>
             ))}
+          </div>
+
+          {/* View My Images */}
+          <div className="text-center opacity-0 animate-fade-up" style={{ animationDelay: "0.55s" }}>
+            <Button variant="glass" size="lg" asChild>
+              <Link to="/my-images">
+                <Image className="w-5 h-5" />
+                View My Images
+              </Link>
+            </Button>
           </div>
 
           {/* Logout Button - Mobile */}
