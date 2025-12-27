@@ -1,13 +1,25 @@
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Wand2, CreditCard, LogOut, Coins, Image, Zap } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
-  const { profile, loading: profileLoading } = useProfile();
+  const { profile, loading: profileLoading, refetchProfile } = useProfile();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get("payment");
+    if (paymentStatus === "success") {
+      toast.success("Payment successful! Credits have been added.");
+      refetchProfile();
+      setSearchParams({});
+    }
+  }, [searchParams, refetchProfile, setSearchParams]);
 
   const handleLogout = async () => {
     await signOut();
