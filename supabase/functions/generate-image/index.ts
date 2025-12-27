@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { HfInference } from "https://esm.sh/@huggingface/inference@2.3.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -115,18 +114,38 @@ serve(async (req) => {
       );
     }
 
-    // Call Hugging Face FLUX.1-schnell API
+    // Call Hugging Face FLUX.1-schnell API directly
     console.log("Calling Hugging Face FLUX.1-schnell API...");
-    const hf = new HfInference(huggingFaceToken);
+    
+    const hfResponse = await fetch(
+      "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${huggingFaceToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ inputs: prompt }),
+      }
+    );
 
-    const image = await hf.textToImage({
-      inputs: prompt,
-      model: "black-forest-labs/FLUX.1-schnell",
-    });
+    if (!hfResponse.ok) {
+      const errorText = await hfResponse.text();
+      console.error("Hugging Face API error:", hfResponse.status, errorText);
+      return new Response(
+        JSON.stringify({ error: "Failed to generate image", details: errorText }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    // Convert the blob to base64
-    const arrayBuffer = await image.arrayBuffer();
-    const base64Image = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    // Convert the response to base64
+    const imageArrayBuffer = await hfResponse.arrayBuffer();
+    const uint8Array = new Uint8Array(imageArrayBuffer);
+    let binaryString = "";
+    for (let i = 0; i < uint8Array.length; i++) {
+      binaryString += String.fromCharCode(uint8Array[i]);
+    }
+    const base64Image = btoa(binaryString);
     
     console.log("Image generated successfully from Hugging Face");
 
