@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      generated_images: {
+        Row: {
+          created_at: string
+          credits_used: number
+          id: string
+          image_url: string
+          prompt: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_used?: number
+          id?: string
+          image_url: string
+          prompt: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_used?: number
+          id?: string
+          image_url?: string
+          prompt?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
