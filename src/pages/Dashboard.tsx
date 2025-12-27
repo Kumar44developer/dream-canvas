@@ -1,16 +1,30 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Wand2, CreditCard, LogOut, Coins, Image, Zap } from "lucide-react";
+import { Sparkles, Wand2, CreditCard, LogOut, Coins, Image, Zap, Heart } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
+
+interface ImageStats {
+  imagesCreated: number;
+  creditsUsed: number;
+  generationsToday: number;
+  favorites: number;
+}
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const { profile, loading: profileLoading, refetchProfile } = useProfile();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [stats, setStats] = useState<ImageStats>({
+    imagesCreated: 0,
+    creditsUsed: 0,
+    generationsToday: 0,
+    favorites: 0,
+  });
 
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");
@@ -20,6 +34,49 @@ const Dashboard = () => {
       setSearchParams({});
     }
   }, [searchParams, refetchProfile, setSearchParams]);
+
+  useEffect(() => {
+    if (user) {
+      fetchStats();
+    }
+  }, [user]);
+
+  const fetchStats = async () => {
+    if (!user) return;
+
+    try {
+      // Fetch all images for the user
+      const { data: images, error } = await supabase
+        .from("generated_images")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error fetching stats:", error);
+        return;
+      }
+
+      // Calculate stats
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const generationsToday = images?.filter((img) => {
+        const imgDate = new Date(img.created_at);
+        return imgDate >= today;
+      }).length ?? 0;
+
+      const totalCreditsUsed = images?.reduce((sum, img) => sum + img.credits_used, 0) ?? 0;
+
+      setStats({
+        imagesCreated: images?.length ?? 0,
+        creditsUsed: totalCreditsUsed,
+        generationsToday,
+        favorites: 0, // Favorites feature not implemented yet
+      });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  };
 
   const handleLogout = async () => {
     await signOut();
@@ -151,10 +208,10 @@ const Dashboard = () => {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 opacity-0 animate-fade-up" style={{ animationDelay: "0.5s" }}>
             {[
-              { icon: Image, label: "Images Created", value: "0" },
-              { icon: Coins, label: "Credits Used", value: "0" },
-              { icon: Zap, label: "Generations Today", value: "0" },
-              { icon: Sparkles, label: "Favorites", value: "0" },
+              { icon: Image, label: "Images Created", value: stats.imagesCreated.toString() },
+              { icon: Coins, label: "Credits Used", value: stats.creditsUsed.toString() },
+              { icon: Zap, label: "Generations Today", value: stats.generationsToday.toString() },
+              { icon: Heart, label: "Favorites", value: stats.favorites.toString() },
             ].map((stat) => (
               <div key={stat.label} className="glass rounded-xl p-4 text-center">
                 <stat.icon className="w-5 h-5 text-primary mx-auto mb-2" />
