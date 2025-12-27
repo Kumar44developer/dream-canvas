@@ -1,26 +1,82 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Wand2, ArrowLeft, Loader2, ImageIcon, Download } from "lucide-react";
+import { Sparkles, Wand2, ArrowLeft, Loader2, ImageIcon, Download, Coins } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
+import { toast } from "sonner";
 
 const Generate = () => {
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const { session } = useAuth();
+  const { profile, refetchProfile } = useProfile();
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
     
+    if (!session) {
+      toast.error("Please sign in to generate images");
+      return;
+    }
+
+    if ((profile?.credits ?? 0) < 2) {
+      toast.error("Insufficient credits. Please purchase more credits.");
+      return;
+    }
+    
     setIsLoading(true);
     setGeneratedImage(null);
     
-    // Simulate API call delay (replace with actual AI integration)
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-image", {
+        body: { prompt: prompt.trim(), size: "1024x1024" },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      if (data?.image_url) {
+        setGeneratedImage(data.image_url);
+        toast.success(`Image generated! ${data.credits_remaining} credits remaining.`);
+        refetchProfile();
+      } else {
+        throw new Error("No image returned from API");
+      }
+    } catch (error) {
+      console.error("Generation error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to generate image");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!generatedImage) return;
     
-    // Placeholder - would be replaced with actual generated image
-    setGeneratedImage("https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=1024&h=1024&fit=crop");
-    setIsLoading(false);
+    try {
+      const response = await fetch(generatedImage);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ai-image-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success("Image downloaded!");
+    } catch {
+      toast.error("Failed to download image");
+    }
   };
 
   return (
@@ -101,6 +157,15 @@ const Generate = () => {
                 </div>
               </div>
 
+              {/* Credits Display */}
+              <div className="glass rounded-xl p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Coins className="w-5 h-5 text-primary" />
+                  <span className="text-foreground font-medium">{profile?.credits ?? 0} credits</span>
+                </div>
+                <span className="text-sm text-muted-foreground">2 credits per image</span>
+              </div>
+
               {/* Tips */}
               <div className="glass rounded-xl p-4">
                 <h3 className="text-sm font-medium text-foreground mb-2">Tips for better results:</h3>
@@ -118,7 +183,7 @@ const Generate = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-foreground font-medium">Generated Image</h3>
                   {generatedImage && (
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={handleDownload}>
                       <Download className="w-4 h-4" />
                       Download
                     </Button>
