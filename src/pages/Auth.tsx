@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { Sparkles, LogIn, UserPlus, ArrowLeft, Eye, EyeOff, Loader2, Phone } from "lucide-react";
+import { Sparkles, LogIn, UserPlus, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,24 +23,17 @@ const signUpSchema = z.object({
   path: ["confirmPassword"],
 });
 
-const phoneSchema = z.string().regex(/^\+[1-9]\d{6,14}$/, "Enter a valid phone number with country code (e.g., +1234567890)");
-
 type LoginData = z.infer<typeof loginSchema>;
 type SignUpData = z.infer<typeof signUpSchema>;
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { user, signIn, signUp, signInWithGoogle, signInWithPhone, verifyPhoneOtp } = useAuth();
+  const { user, signIn, signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [phoneLoading, setPhoneLoading] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [otpCode, setOtpCode] = useState("");
 
   const [loginData, setLoginData] = useState<LoginData>({ email: "", password: "" });
   const [signUpData, setSignUpData] = useState<SignUpData>({ 
@@ -131,43 +123,6 @@ const Auth = () => {
     }
   };
 
-  const handleSendOtp = async () => {
-    const result = phoneSchema.safeParse(phoneNumber);
-    if (!result.success) {
-      setErrors({ phone: result.error.errors[0].message });
-      return;
-    }
-    
-    setPhoneLoading(true);
-    const { error } = await signInWithPhone(phoneNumber);
-    setPhoneLoading(false);
-    
-    if (error) {
-      toast.error(error.message || "Failed to send OTP");
-    } else {
-      setOtpSent(true);
-      toast.success("OTP sent to your phone!");
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (otpCode.length !== 6) {
-      setErrors({ otp: "Please enter a 6-digit code" });
-      return;
-    }
-    
-    setPhoneLoading(true);
-    const { error } = await verifyPhoneOtp(phoneNumber, otpCode);
-    setPhoneLoading(false);
-    
-    if (error) {
-      toast.error(error.message || "Invalid OTP");
-    } else {
-      toast.success("Signed in successfully!");
-      navigate("/dashboard");
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background hero-gradient flex items-center justify-center px-6 py-12">
       <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse-glow" />
@@ -254,117 +209,11 @@ const Auth = () => {
               <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+              <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
             </div>
           </div>
 
-          {/* Auth Method Toggle */}
-          <div className="flex rounded-lg bg-muted/50 p-1 mb-6">
-            <button
-              onClick={() => { setAuthMethod('email'); setErrors({}); setOtpSent(false); }}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                authMethod === 'email' ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Email
-            </button>
-            <button
-              onClick={() => { setAuthMethod('phone'); setErrors({}); }}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                authMethod === 'phone' ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Phone
-            </button>
-          </div>
-
-          {authMethod === 'phone' ? (
-            <div className="space-y-5">
-              {!otpSent ? (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-foreground">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+1234567890"
-                      value={phoneNumber}
-                      onChange={(e) => {
-                        setPhoneNumber(e.target.value);
-                        if (errors.phone) setErrors((prev) => ({ ...prev, phone: "" }));
-                      }}
-                      className={errors.phone ? "border-destructive" : ""}
-                    />
-                    {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
-                    <p className="text-xs text-muted-foreground">Include country code (e.g., +1 for US)</p>
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="glow"
-                    size="lg"
-                    className="w-full"
-                    onClick={handleSendOtp}
-                    disabled={phoneLoading}
-                  >
-                    {phoneLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Phone className="w-5 h-5" />}
-                    {phoneLoading ? "Sending OTP..." : "Send OTP"}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Enter OTP</Label>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      We sent a code to {phoneNumber}
-                    </p>
-                    <div className="flex justify-center">
-                      <InputOTP
-                        maxLength={6}
-                        value={otpCode}
-                        onChange={(value) => {
-                          setOtpCode(value);
-                          if (errors.otp) setErrors((prev) => ({ ...prev, otp: "" }));
-                        }}
-                      >
-                        <InputOTPGroup>
-                          <InputOTPSlot index={0} />
-                          <InputOTPSlot index={1} />
-                          <InputOTPSlot index={2} />
-                          <InputOTPSlot index={3} />
-                          <InputOTPSlot index={4} />
-                          <InputOTPSlot index={5} />
-                        </InputOTPGroup>
-                      </InputOTP>
-                    </div>
-                    {errors.otp && <p className="text-sm text-destructive text-center">{errors.otp}</p>}
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="glow"
-                    size="lg"
-                    className="w-full"
-                    onClick={handleVerifyOtp}
-                    disabled={phoneLoading}
-                  >
-                    {phoneLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogIn className="w-5 h-5" />}
-                    {phoneLoading ? "Verifying..." : "Verify & Sign In"}
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => { setOtpSent(false); setOtpCode(""); }}
-                  >
-                    Use a different number
-                  </Button>
-                </>
-              )}
-            </div>
-          ) : isLogin ? (
+          {isLogin ? (
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-foreground">Email</Label>
