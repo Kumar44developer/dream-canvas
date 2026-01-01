@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Sparkles, LogIn, UserPlus, Wand2, Image, Zap, Stars } from "lucide-react";
+import { LogIn, UserPlus, Wand2, Image, Zap, Stars } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroShowcase from "@/assets/hero-showcase.jpg";
+import pixelmindLogo from "@/assets/pixelmind-logo.png";
 
 const Index = () => {
   return (
@@ -10,9 +11,7 @@ const Index = () => {
       <nav className="fixed top-0 left-0 right-0 z-50 glass">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <img src={pixelmindLogo} alt="PixelMind AI" className="w-10 h-10 rounded-xl object-cover" />
             <span className="font-display text-xl font-bold text-foreground">
               PixelMind AI
             </span>
@@ -190,9 +189,7 @@ const Index = () => {
       <footer className="py-8 px-6 border-t border-border/30">
         <div className="container mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-primary-foreground" />
-            </div>
+            <img src={pixelmindLogo} alt="PixelMind AI" className="w-8 h-8 rounded-lg object-cover" />
             <span className="font-display text-lg font-bold text-foreground">PixelMind AI</span>
           </div>
           <p className="text-sm text-muted-foreground">
