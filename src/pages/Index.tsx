@@ -14,7 +14,7 @@ const Index = () => {
               <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="font-display text-xl font-bold text-foreground">
-              AI Image Generator
+              PixelMind AI
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -56,7 +56,7 @@ const Index = () => {
               </h1>
               
               <p className="text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-10 opacity-0 animate-fade-up" style={{ animationDelay: "0.3s" }}>
-                Transform your imagination into breathtaking visuals. Simply describe what you envision, and watch as AI brings your ideas to life.
+                Create stunning AI-generated images from simple text prompts.
               </p>
 
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 opacity-0 animate-fade-up" style={{ animationDelay: "0.4s" }}>
@@ -185,6 +185,21 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="py-8 px-6 border-t border-border/30">
+        <div className="container mx-auto text-center">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-primary-foreground" />
+            </div>
+            <span className="font-display text-lg font-bold text-foreground">PixelMind AI</span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} PixelMind AI. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };
