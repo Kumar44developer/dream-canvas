@@ -124,18 +124,18 @@ const Generate = () => {
             </p>
           </div>
 
+          {/* Style Presets - Full Width */}
+          <div className="glass rounded-2xl p-5 mb-8 opacity-0 animate-fade-up" style={{ animationDelay: "0.15s" }}>
+            <StylePresets
+              selectedStyle={selectedStyle.id}
+              onSelectStyle={setSelectedStyle}
+            />
+          </div>
+
           {/* Generator Section */}
           <div className="grid lg:grid-cols-2 gap-8">
             {/* Input Section */}
             <div className="space-y-6 opacity-0 animate-fade-up" style={{ animationDelay: "0.2s" }}>
-              {/* Style Presets */}
-              <div className="glass rounded-2xl p-6">
-                <StylePresets
-                  selectedStyle={selectedStyle.id}
-                  onSelectStyle={setSelectedStyle}
-                />
-              </div>
-
               <div className="glass rounded-2xl p-6">
                 <label className="block text-foreground font-medium mb-3">
                   Describe your image
@@ -149,7 +149,7 @@ const Generate = () => {
                   placeholder="A majestic dragon soaring through a cosmic nebula, with iridescent scales reflecting starlight..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  className="min-h-[140px] resize-none bg-muted/50 border-border focus:border-primary/50 text-foreground placeholder:text-muted-foreground"
+                  className="min-h-[120px] resize-none bg-muted/50 border-border focus:border-primary/50 text-foreground placeholder:text-muted-foreground"
                 />
                 <div className="flex items-center justify-between mt-4">
                   <span className="text-sm text-muted-foreground">
