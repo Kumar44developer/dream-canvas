@@ -8,9 +8,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
 import pixelmindLogo from "@/assets/pixelmind-logo.png";
+import StylePresets, { StylePreset, stylePresets } from "@/components/StylePresets";
 
 const Generate = () => {
   const [prompt, setPrompt] = useState("");
+  const [selectedStyle, setSelectedStyle] = useState<StylePreset>(stylePresets[0]);
   const [isLoading, setIsLoading] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const { session } = useAuth();
@@ -33,8 +35,13 @@ const Generate = () => {
     setGeneratedImage(null);
     
     try {
+      // Combine user prompt with selected style
+      const fullPrompt = selectedStyle.prompt 
+        ? `${prompt.trim()}, ${selectedStyle.prompt}`
+        : prompt.trim();
+
       const { data, error } = await supabase.functions.invoke("generate-image", {
-        body: { prompt: prompt.trim(), size: "1024x1024" },
+        body: { prompt: fullPrompt, size: "1024x1024" },
       });
 
       if (error) {
@@ -121,15 +128,28 @@ const Generate = () => {
           <div className="grid lg:grid-cols-2 gap-8">
             {/* Input Section */}
             <div className="space-y-6 opacity-0 animate-fade-up" style={{ animationDelay: "0.2s" }}>
+              {/* Style Presets */}
+              <div className="glass rounded-2xl p-6">
+                <StylePresets
+                  selectedStyle={selectedStyle.id}
+                  onSelectStyle={setSelectedStyle}
+                />
+              </div>
+
               <div className="glass rounded-2xl p-6">
                 <label className="block text-foreground font-medium mb-3">
                   Describe your image
+                  {selectedStyle.id !== "none" && (
+                    <span className="ml-2 text-sm font-normal text-primary">
+                      + {selectedStyle.name} style
+                    </span>
+                  )}
                 </label>
                 <Textarea
-                  placeholder="A majestic dragon soaring through a cosmic nebula, with iridescent scales reflecting starlight, ultra detailed, cinematic lighting..."
+                  placeholder="A majestic dragon soaring through a cosmic nebula, with iridescent scales reflecting starlight..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  className="min-h-[160px] resize-none bg-muted/50 border-border focus:border-primary/50 text-foreground placeholder:text-muted-foreground"
+                  className="min-h-[140px] resize-none bg-muted/50 border-border focus:border-primary/50 text-foreground placeholder:text-muted-foreground"
                 />
                 <div className="flex items-center justify-between mt-4">
                   <span className="text-sm text-muted-foreground">
