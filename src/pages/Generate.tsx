@@ -13,6 +13,7 @@ import AspectRatios, { AspectRatio, aspectRatios } from "@/components/AspectRati
 
 const Generate = () => {
   const [prompt, setPrompt] = useState("");
+  const [negativePrompt, setNegativePrompt] = useState("");
   const [selectedStyle, setSelectedStyle] = useState<StylePreset>(stylePresets[0]);
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatio>(aspectRatios[0]);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +45,8 @@ const Generate = () => {
 
       const { data, error } = await supabase.functions.invoke("generate-image", {
         body: { 
-          prompt: fullPrompt, 
+          prompt: fullPrompt,
+          negative_prompt: negativePrompt.trim() || undefined,
           size: `${selectedAspectRatio.width}x${selectedAspectRatio.height}` 
         },
       });
@@ -164,6 +166,22 @@ const Generate = () => {
                   onChange={(e) => setPrompt(e.target.value)}
                   className="min-h-[120px] resize-none bg-muted/50 border-border focus:border-primary/50 text-foreground placeholder:text-muted-foreground"
                 />
+                {/* Negative Prompt */}
+                <div className="mt-4 pt-4 border-t border-border/50">
+                  <label className="block text-foreground font-medium mb-2 text-sm">
+                    Negative Prompt
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">
+                      (exclude unwanted elements)
+                    </span>
+                  </label>
+                  <Textarea
+                    placeholder="blurry, low quality, distorted, watermark, text, ugly, deformed..."
+                    value={negativePrompt}
+                    onChange={(e) => setNegativePrompt(e.target.value)}
+                    className="min-h-[70px] resize-none bg-muted/50 border-border focus:border-primary/50 text-foreground placeholder:text-muted-foreground text-sm"
+                  />
+                </div>
+
                 <div className="flex items-center justify-between mt-4">
                   <span className="text-sm text-muted-foreground">
                     {prompt.length}/1000 characters
