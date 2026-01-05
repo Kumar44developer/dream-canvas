@@ -9,10 +9,12 @@ import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
 import pixelmindLogo from "@/assets/pixelmind-logo.png";
 import StylePresets, { StylePreset, stylePresets } from "@/components/StylePresets";
+import AspectRatios, { AspectRatio, aspectRatios } from "@/components/AspectRatios";
 
 const Generate = () => {
   const [prompt, setPrompt] = useState("");
   const [selectedStyle, setSelectedStyle] = useState<StylePreset>(stylePresets[0]);
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatio>(aspectRatios[0]);
   const [isLoading, setIsLoading] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const { session } = useAuth();
@@ -41,7 +43,10 @@ const Generate = () => {
         : prompt.trim();
 
       const { data, error } = await supabase.functions.invoke("generate-image", {
-        body: { prompt: fullPrompt, size: "1024x1024" },
+        body: { 
+          prompt: fullPrompt, 
+          size: `${selectedAspectRatio.width}x${selectedAspectRatio.height}` 
+        },
       });
 
       if (error) {
@@ -125,17 +130,25 @@ const Generate = () => {
           </div>
 
           {/* Style Presets - Full Width */}
-          <div className="glass rounded-2xl p-5 mb-8 opacity-0 animate-fade-up" style={{ animationDelay: "0.15s" }}>
+          <div className="glass rounded-2xl p-5 mb-4 opacity-0 animate-fade-up" style={{ animationDelay: "0.15s" }}>
             <StylePresets
               selectedStyle={selectedStyle.id}
               onSelectStyle={setSelectedStyle}
             />
           </div>
 
+          {/* Aspect Ratios */}
+          <div className="glass rounded-2xl p-5 mb-8 opacity-0 animate-fade-up" style={{ animationDelay: "0.2s" }}>
+            <AspectRatios
+              selectedRatio={selectedAspectRatio.id}
+              onSelectRatio={setSelectedAspectRatio}
+            />
+          </div>
+
           {/* Generator Section */}
           <div className="grid lg:grid-cols-2 gap-8">
             {/* Input Section */}
-            <div className="space-y-6 opacity-0 animate-fade-up" style={{ animationDelay: "0.2s" }}>
+            <div className="space-y-6 opacity-0 animate-fade-up" style={{ animationDelay: "0.25s" }}>
               <div className="glass rounded-2xl p-6">
                 <label className="block text-foreground font-medium mb-3">
                   Describe your image
@@ -197,7 +210,7 @@ const Generate = () => {
             </div>
 
             {/* Output Section */}
-            <div className="opacity-0 animate-fade-up" style={{ animationDelay: "0.3s" }}>
+            <div className="opacity-0 animate-fade-up" style={{ animationDelay: "0.35s" }}>
               <div className="glass rounded-2xl p-6 h-full min-h-[400px] flex flex-col">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-foreground font-medium">Generated Image</h3>
