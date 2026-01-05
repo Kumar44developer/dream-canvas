@@ -29,7 +29,7 @@ const Generate = () => {
       return;
     }
 
-    if ((profile?.credits ?? 0) < 2) {
+    if ((profile?.credits ?? 0) < 1) {
       toast.error("Insufficient credits. Please purchase more credits.");
       return;
     }
@@ -213,7 +213,7 @@ const Generate = () => {
                   <Coins className="w-5 h-5 text-primary" />
                   <span className="text-foreground font-medium">{profile?.credits ?? 0} credits</span>
                 </div>
-                <span className="text-sm text-muted-foreground">2 credits per image</span>
+                <span className="text-sm text-muted-foreground">1 credit per image</span>
               </div>
 
               {/* Tips */}
