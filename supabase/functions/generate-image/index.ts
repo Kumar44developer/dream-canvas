@@ -74,7 +74,7 @@ serve(async (req) => {
     }
 
     // Parse request
-    const { prompt } = await req.json();
+    const { prompt, negative_prompt } = await req.json();
 
     if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
       return new Response(
@@ -83,7 +83,13 @@ serve(async (req) => {
       );
     }
 
-    console.log("Generating image for user:", user.id, "Prompt:", prompt.substring(0, 50));
+    // Build final prompt with negative prompt if provided
+    let finalPrompt = prompt;
+    if (negative_prompt && typeof negative_prompt === "string" && negative_prompt.trim().length > 0) {
+      finalPrompt = `${prompt}. Avoid: ${negative_prompt.trim()}`;
+    }
+
+    console.log("Generating image for user:", user.id, "Prompt:", finalPrompt.substring(0, 80));
 
     // Check user credits
     const { data: profile, error: profileError } = await supabase
@@ -125,7 +131,7 @@ serve(async (req) => {
           "Authorization": `Bearer ${huggingFaceToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ inputs: prompt }),
+        body: JSON.stringify({ inputs: finalPrompt }),
       }
     );
 
