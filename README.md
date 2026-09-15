@@ -1,73 +1,87 @@
-# Welcome to your Lovable project
+# PixelMind AI (Dream Canvas)
 
-## Project info
+An AI image generation web app that turns text prompts into images. Users sign in, spend credits to generate artwork, browse their gallery, and top up credits through a payment flow. The frontend is a React single-page app, and the backend runs on Supabase with authentication, a database, and edge functions.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Features
 
-## How can I edit this code?
+- Email and Google authentication with protected routes
+- Text-to-image generation with selectable style presets and aspect ratios
+- Credit system that tracks and deducts usage per generation
+- Personal gallery of previously generated images
+- Credit purchase flow with payment creation and webhook handling
+- Responsive interface built on the shadcn-ui component library
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+| Layer | Technology |
+| --- | --- |
+| Framework | React 18 with TypeScript |
+| Build tool | Vite |
+| Styling | Tailwind CSS and shadcn-ui |
+| Routing | React Router |
+| Data fetching | TanStack Query |
+| Backend | Supabase (Auth, Postgres, Edge Functions) |
+| Validation | Zod and React Hook Form |
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Project Structure
 
-Changes made via Lovable will be committed automatically to this repo.
+```
+project25/
+├── src/
+│   ├── components/      Shared UI and shadcn components
+│   ├── contexts/        Authentication context
+│   ├── hooks/           Reusable hooks
+│   ├── integrations/    Supabase client and types
+│   ├── pages/           Route-level pages
+│   └── main.tsx         Application entry point
+├── supabase/
+│   ├── functions/       Edge functions for images, credits, and payments
+│   └── migrations/      Database schema migrations
+├── public/              Static assets
+└── index.html
+```
 
-**Use your preferred IDE**
+## Application Routes
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+| Route | Access | Purpose |
+| --- | --- | --- |
+| `/` | Public | Landing page |
+| `/auth`, `/login`, `/signup` | Public | Sign in and registration |
+| `/dashboard` | Protected | User dashboard |
+| `/generate` | Protected | Generate images from prompts |
+| `/my-images` | Protected | Personal image gallery |
+| `/buy-credits` | Protected | Purchase additional credits |
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Getting Started
 
-Follow these steps:
+Requires Node.js and npm.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The dev server runs at `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Environment Variables
 
-**Use GitHub Codespaces**
+Create a `.env` file in the project root with your Supabase credentials:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
+VITE_SUPABASE_PROJECT_ID=your_supabase_project_id
+```
 
-## What technologies are used for this project?
+## Available Scripts
 
-This project is built with:
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the development server |
+| `npm run build` | Create a production build |
+| `npm run preview` | Preview the production build locally |
+| `npm run lint` | Run ESLint |
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Author
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Created by [Kumar44developer](https://github.com/Kumar44developer).
